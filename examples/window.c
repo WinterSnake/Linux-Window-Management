@@ -6,21 +6,19 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// Window
 #include <unistd.h>
 #include <xcb/xcb.h>
 
+// EGL
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include <GL/glcorearb.h>
-
-#define GL_FUNCTIONS(X) \
-    X(PFNGLGETSTRINGPROC,                glGetString                ) \
-
-#define X(type, name) static type name;
-	GL_FUNCTIONS(X)
-#undef X
-
+// OpenGL
+#include <dlfcn.h>
+#define GL_VENDOR                         0x1F00
+#define GL_RENDERER                       0x1F01
+#define GL_VERSION                        0x1F02
 
 int main(int argc, char** argv)
 {
@@ -148,14 +146,25 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	// EGL: OpenGL
-	// TODO: Write OpenGL Loader (non-eglGetProc)
-	#define X(type, name) name = (type)eglGetProcAddress(#name);
-		GL_FUNCTIONS(X)
-	#undef X
-	printf("[GL::Log] Version: %s\n",   glGetString(GL_VERSION));
-	printf("[GL::Log] Vendor: %s\n",    glGetString(GL_VENDOR));
-	printf("[GL::Log] Renderer: %s\n",  glGetString(GL_RENDERER));
+	// OpenGL: Load
+	void* openGLHandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
+	if (!openGLHandle)
+	{
+		fprintf(stderr, "Unable to load GL library\n");
+		return 1;
+	}
+	const char* (*glGetString)(unsigned int);
+	glGetString = dlsym(openGLHandle, "glGetString");
+	if (dlerror() != NULL)
+	{
+		fprintf(stderr, "Unable to get glGetString function\n");
+		return 1;
+	}
+	dlclose(openGLHandle);
+	printf("[GL::Log] Version: %s\n", glGetString(GL_VERSION));
+	printf("[GL::Log] Vendor: %s\n", glGetString(GL_VENDOR));
+	printf("[GL::Log] Renderer: %s\n", glGetString(GL_RENDERER));
+
 	// Events
 	sleep(10);
 
