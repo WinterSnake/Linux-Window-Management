@@ -1,5 +1,5 @@
 /*
-	Window Creation: Linux
+	Window Creation: Linux(XCB+EGL)
 
 	Written By: Ryan Smith
 */
@@ -64,11 +64,15 @@ int main(int argc, char** argv)
 	}
 
 	// EGL: Initialize
-	EGLDisplay eglDisplay = eglGetPlatformDisplay(
-		EGL_PLATFORM_XCB_EXT, connection, (const EGLAttrib[]) {
-			EGL_PLATFORM_XCB_SCREEN_EXT, screenCount, EGL_NONE
-		}
-	);
+	printf("[EGL::Log] Extensions: {%s}\n", eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS));
+	EGLDisplay eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	// TODO: Figure out why EGL_PLATFORM_XCB_EXT uses MESA instead of nvidia
+	//EGLDisplay eglDisplay = eglGetPlatformDisplay(
+	//	EGL_PLATFORM_XCB_EXT, connection, (const EGLAttrib[]) {
+	//		EGL_PLATFORM_XCB_SCREEN_EXT, screenCount,
+	//		EGL_NONE,
+	//	}
+	//);
 	if (eglDisplay == EGL_NO_DISPLAY)
 	{
 		fprintf(stderr, "Unable to get EGL display from XCB window\n");
@@ -83,6 +87,7 @@ int main(int argc, char** argv)
 	printf("[EGL::Log] Version: %i.%i\n", major, minor);
 	printf("[EGL::Log] APIs: %s\n", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
 	printf("[EGL::Log] Vendor: %s\n", eglQueryString(eglDisplay, EGL_VENDOR));
+	printf("[EGL::Log] Extensions: {%s}\n", eglQueryString(eglDisplay, EGL_EXTENSIONS));
 	// EGL: Bind
 	EGLBoolean bound = eglBindAPI(EGL_OPENGL_API);
 	if (!bound)
